@@ -40,6 +40,8 @@ if uploaded_file is not None:
     duration = st.slider("Ses dosyasının süresini belirleyin (saniye)", min_value=1.0, max_value=10.0, value=2.5)
     offset = st.slider("Ses dosyasının başlangıç ofsetini belirleyin (saniye)", min_value=0.0, max_value=5.0, value=0.5)
 
+    uploaded_file_object = io.BytesIO(uploaded_file.read())
+
     data, sample_rate = librosa.load(uploaded_file, duration=duration, offset=offset)
 
     # Ses dosyasını oynatma
