@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 import librosa.display
 
 # Model ve scaler dosyalarını yükle
-model = tf.keras.models.load_model('path_to_your_model/emotion_intensity_model.h5')
-scaler = joblib.load('path_to_your_model/scaler.pkl')
-encoder_emotion = joblib.load('path_to_your_model/encoder_emotion.pkl')
-encoder_intensity = joblib.load('path_to_your_model/encoder_intensity.pkl')
+model = tf.keras.models.load_model('emotion_intensity_model.h5')
+scaler = joblib.load('scaler.pkl')
+encoder_emotion = joblib.load('encoder_emotion.pkl')
+encoder_intensity = joblib.load('encoder_intensity.pkl')
 
 
 # Özellikleri çıkarma fonksiyonu
