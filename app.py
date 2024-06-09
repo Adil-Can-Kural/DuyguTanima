@@ -5,6 +5,9 @@ import tensorflow as tf
 import joblib
 import matplotlib.pyplot as plt
 import librosa.display
+import io
+
+# Burada io modülünü kullanabilirsiniz
 
 # Model ve scaler dosyalarını yükle
 model = tf.keras.models.load_model('emotion_intensity_model.h5')
