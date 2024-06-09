@@ -1,22 +1,41 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import librosa
-import tensorflow as tf
-from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import load_model
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from keras.models import load_model
 
 
 # Modeli yükle
 @st.cache(allow_output_mutation=True)
 def load_model_from_file():
-    model = load_model('path_to_your_model.h5')
+    model = load_model('emotion_intensity_model.h5')
     return model
 
 
 model = load_model_from_file()
 
 
-# Özellik çıkarma fonksiyonları
+# Fonksiyonları tanımla
+def create_waveplot(data, sr):
+    plt.figure(figsize=(10, 3))
+    plt.title('Waveplot for audio', size=15)
+    librosa.display.waveshow(data, sr=sr)
+    st.pyplot()
+
+
+def create_spectrogram(data, sr):
+    X = librosa.stft(data)
+    Xdb = librosa.amplitude_to_db(abs(X))
+    plt.figure(figsize=(12, 3))
+    plt.title('Spectrogram for audio', size=15)
+    librosa.display.specshow(Xdb, sr=sr, x_axis='time', y_axis='hz')
+    plt.colorbar()
+    st.pyplot()
+
+
 def extract_features(data, sample_rate, n_mfcc=13):
     mfccs = librosa.feature.mfcc(y=data, sr=sample_rate, n_mfcc=n_mfcc)
     return mfccs.T
@@ -60,3 +79,8 @@ if uploaded_file is not None:
     st.write(y_pred_emotion)
     st.write("Yoğunluk Tahminleri:")
     st.write(y_pred_intensity)
+
+    # İlk ses dosyası için waveplot ve spectrogram
+    data, sr = librosa.load(uploaded_file, sr=None)
+    create_waveplot(data, sr)
+    create_spectrogram(data, sr)
