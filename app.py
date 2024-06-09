@@ -1,46 +1,21 @@
-import streamlit as st
+from flask import Flask, request, jsonify
 import numpy as np
-import pandas as pd
 import librosa
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from keras.models import load_model
+import tensorflow as tf
 
+app = Flask(__name__)
 
 # Modeli yükle
-@st.cache(allow_output_mutation=True)
-def load_model_from_file():
-    model = load_model('emotion_intensity_model.h5')
-    return model
+model = tf.keras.models.load_model('emotion_intensity_model.h5')
 
 
-model = load_model_from_file()
-
-
-# Fonksiyonları tanımla
-def create_waveplot(data, sr):
-    plt.figure(figsize=(10, 3))
-    plt.title('Waveplot for audio', size=15)
-    librosa.display.waveshow(data, sr=sr)
-    st.pyplot()
-
-
-def create_spectrogram(data, sr):
-    X = librosa.stft(data)
-    Xdb = librosa.amplitude_to_db(abs(X))
-    plt.figure(figsize=(12, 3))
-    plt.title('Spectrogram for audio', size=15)
-    librosa.display.specshow(Xdb, sr=sr, x_axis='time', y_axis='hz')
-    plt.colorbar()
-    st.pyplot()
-
-
+# Özellik çıkarma fonksiyonu
 def extract_features(data, sample_rate, n_mfcc=13):
     mfccs = librosa.feature.mfcc(y=data, sr=sample_rate, n_mfcc=n_mfcc)
     return mfccs.T
 
 
+# Sliding window fonksiyonu
 def sliding_window(data, window_size, step_size):
     num_segments = int((len(data) - window_size) / step_size) + 1
     segments = []
@@ -50,37 +25,31 @@ def sliding_window(data, window_size, step_size):
     return np.array(segments)
 
 
-def preprocess_audio(file):
-    data, sample_rate = librosa.load(file, sr=None)
+# Flask API tahmin endpoint'i
+@app.route('/predict', methods=['POST'])
+def predict():
+    audio_file = request.files['file']
+    duration = float(request.form.get('duration', 2.5))
+    offset = float(request.form.get('offset', 0.5))
+
+    # Ses dosyasını yükle ve özellikleri çıkar
+    data, sample_rate = librosa.load(audio_file, duration=duration, offset=offset)
     features = extract_features(data, sample_rate)
-    feature_segments = sliding_window(features, window_size=50, step_size=25)
 
-    scaler = StandardScaler()
-    feature_segments_scaled = np.zeros(
-        (feature_segments.shape[0], feature_segments.shape[1], feature_segments.shape[2]))
-    for i in range(feature_segments.shape[0]):
-        feature_segments_scaled[i] = scaler.fit_transform(feature_segments[i])
+    # Sliding window
+    window_size = 50
+    step_size = 25
+    feature_segments = sliding_window(features, window_size, step_size)
 
-    return feature_segments_scaled
+    # Model ile tahmin yap
+    y_pred_emotion, y_pred_intensity = model.predict(feature_segments)
+
+    # Tahminleri JSON formatında döndür
+    return jsonify({
+        'predicted_emotions': y_pred_emotion.tolist(),
+        'predicted_intensities': y_pred_intensity.tolist()
+    })
 
 
-# Streamlit uygulaması
-st.title('Duygu Tanıma Uygulaması')
-
-uploaded_file = st.file_uploader("Bir ses dosyası yükleyin", type=["wav"])
-
-if uploaded_file is not None:
-    st.audio(uploaded_file, format='audio/wav')
-    features = preprocess_audio(uploaded_file)
-
-    y_pred_emotion, y_pred_intensity = model.predict(features)
-
-    st.write("Duygu Tahminleri:")
-    st.write(y_pred_emotion)
-    st.write("Yoğunluk Tahminleri:")
-    st.write(y_pred_intensity)
-
-    # İlk ses dosyası için waveplot ve spectrogram
-    data, sr = librosa.load(uploaded_file, sr=None)
-    create_waveplot(data, sr)
-    create_spectrogram(data, sr)
+if __name__ == '__main__':
+    app.run(debug=True)
