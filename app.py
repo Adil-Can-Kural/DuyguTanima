@@ -77,10 +77,15 @@ if uploaded_file is not None:
     predicted_emotions = [encoder_emotion.categories_[0][np.argmax(pred)] for pred in y_pred_emotion]
     predicted_intensities = [encoder_intensity.categories_[0][np.argmax(pred)] for pred in y_pred_intensity]
 
+    # Tahmin sonuçlarını zamanla ilişkilendirme
+    segment_duration = (window_size / sample_rate) * step_size / window_size  # segment süresi saniye cinsinden
+    timestamps = [(i * segment_duration) for i in range(len(predicted_emotions))]
+
     # Tahmin sonuçlarını gösterme
     st.subheader("Tahmin Sonuçları")
-    st.write("Duygular:", predicted_emotions)
-    st.write("Yoğunluklar:", predicted_intensities)
+
+    results = [{"Time (s)": round(timestamps[i], 2), "Emotion": predicted_emotions[i], "Intensity": predicted_intensities[i]} for i in range(len(predicted_emotions))]
+    st.write(results)
 
     # Zaman içinde tahmin grafiği çizme
     st.subheader("Zaman İçinde Tahminler")
@@ -92,18 +97,18 @@ if uploaded_file is not None:
     # Emotion predictions over time
     plt.subplot(2, 1, 1)
     for i, emotion in enumerate(encoder_emotion.categories_[0]):
-        plt.plot(range(time_steps), [pred[i] for pred in y_pred_emotion], label=emotion)
+        plt.plot(timestamps, [pred[i] for pred in y_pred_emotion], label=emotion)
     plt.title('Predicted Emotions Over Time')
-    plt.xlabel('Time Steps')
+    plt.xlabel('Time (s)')
     plt.ylabel('Emotion Probability')
     plt.legend()
 
     # Intensity predictions over time
     plt.subplot(2, 1, 2)
     for i, intensity in enumerate(encoder_intensity.categories_[0]):
-        plt.plot(range(time_steps), [pred[i] for pred in y_pred_intensity], label=intensity)
+        plt.plot(timestamps, [pred[i] for pred in y_pred_intensity], label=intensity)
     plt.title('Predicted Intensity Over Time')
-    plt.xlabel('Time Steps')
+    plt.xlabel('Time (s)')
     plt.ylabel('Intensity Probability')
     plt.legend()
 
