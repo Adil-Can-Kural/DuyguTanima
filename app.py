@@ -81,12 +81,6 @@ if uploaded_file is not None:
     segment_duration = (window_size / sample_rate) * step_size / window_size  # segment süresi saniye cinsinden
     timestamps = [(i * segment_duration) for i in range(len(predicted_emotions))]
 
-    # Tahmin sonuçlarını gösterme
-    st.subheader("Tahmin Sonuçları")
-
-    results = [{"Time (s)": round(timestamps[i], 2), "Emotion": predicted_emotions[i], "Intensity": predicted_intensities[i]} for i in range(len(predicted_emotions))]
-    st.write(results)
-
     # Zaman içinde tahmin grafiği çizme
     st.subheader("Zaman İçinde Tahminler")
 
