@@ -7,20 +7,16 @@ import matplotlib.pyplot as plt
 import librosa.display
 import io
 
-# Burada io modülünü kullanabilirsiniz
-
 # Model ve scaler dosyalarını yükle
 model = tf.keras.models.load_model('emotion_intensity_model.h5')
 scaler = joblib.load('scaler.pkl')
 encoder_emotion = joblib.load('encoder_emotion.pkl')
 encoder_intensity = joblib.load('encoder_intensity.pkl')
 
-
 # Özellikleri çıkarma fonksiyonu
 def extract_features(data, sample_rate, n_mfcc=13):
     mfccs = librosa.feature.mfcc(y=data, sr=sample_rate, n_mfcc=n_mfcc)
     return mfccs.T
-
 
 # Sliding window fonksiyonu
 def sliding_window(data, window_size, step_size):
@@ -30,7 +26,6 @@ def sliding_window(data, window_size, step_size):
         end = start + window_size
         segments.append(data[start:end])
     return np.array(segments)
-
 
 # Uygulama başlığı
 st.title("Duygu ve Yoğunluk Tahmini")
@@ -45,15 +40,16 @@ if uploaded_file is not None:
 
     uploaded_file_object = io.BytesIO(uploaded_file.read())
 
-    data, sample_rate = librosa.load(uploaded_file, duration=duration, offset=offset)
+    data, sample_rate = librosa.load(uploaded_file_object, sr=None, duration=duration, offset=offset)
 
     # Ses dosyasını oynatma
-    st.audio(data, format='audio/wav')
+    st.audio(uploaded_file_object, format='audio/wav')
 
     # Ses dalga formu çizimi
     st.subheader("Ses Dalga Formu")
-    st.pyplot(plt.figure(figsize=(10, 3)))
+    plt.figure(figsize=(10, 3))
     librosa.display.waveshow(data, sr=sample_rate)
+    st.pyplot(plt)
 
     # Spectrogram çizimi
     st.subheader("Spektrogram")
